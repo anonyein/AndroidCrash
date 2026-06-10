@@ -1,0 +1,58 @@
+# .github/workflows/build-16k.yml
+name: Android Breakpad Build with True 16K Page Support
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 添加 16K 对齐配置的关键步骤
+      - name: Add 16K page support configuration to build.gradle
+        run: |
+          BUILD_GRADLE_PATH="breakpad-android/build.gradle"
+          # 使用 sed 命令在 defaultConfig 块内添加配置
+          sed -i '/defaultConfig {/a \            ndk {\n                abiFilters "arm64-v8a"\n            }\n            externalNativeBuild {\n                cmake {\n                    cppFlags "-std=c++11 -Wl,-z,max-page-size=16384"\n                    arguments "-DANDROID_PAGE_SIZE=16384"\n                }\n            }' $BUILD_GRADLE_PATH
+          echo "16K page support configuration added to $BUILD_GRADLE_PATH"
+          # 可选：打印修改后的文件，用于调试
+          # cat $BUILD_GRADLE_PATH
+
+      - name: Build with Gradle
+        run: ./gradlew :breakpad-android:assembleRelease
+
+      - name: Upload AAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: breakpad-android-release-16k
+          path: breakpad-android/build/outputs/aar/*.aar
