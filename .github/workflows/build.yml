@@ -15,7 +15,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
+      # 在 checkout 步骤之后，为 Ubuntu 环境更换镜像源，加速 Gradle 依赖下载
+      - name: Use China Mirror for Ubuntu
+        run: |
+          sudo sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
+          sudo apt-get update
+          
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
