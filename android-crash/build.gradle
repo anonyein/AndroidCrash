@@ -16,12 +16,13 @@ android {
         consumerProguardFiles "consumer-rules.pro"
 
         ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a", "x86"
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
-
         externalNativeBuild {
             cmake {
-                cppFlags ""
+                // 添加 16K 页支持：链接器页大小 & CMake 页大小参数
+                cppFlags "-Wl,-z,max-page-size=16384"
+                arguments "-DANDROID_PAGE_SIZE=16384"
             }
         }
     }
