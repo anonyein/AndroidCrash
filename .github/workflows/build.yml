@@ -38,16 +38,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # 添加 16K 对齐配置的关键步骤
-      - name: Add 16K page support configuration to build.gradle
-        run: |
-          BUILD_GRADLE_PATH="breakpad-android/build.gradle"
-          # 使用 sed 命令在 defaultConfig 块内添加配置
-          sed -i '/defaultConfig {/a \            ndk {\n                abiFilters "arm64-v8a"\n            }\n            externalNativeBuild {\n                cmake {\n                    cppFlags "-std=c++11 -Wl,-z,max-page-size=16384"\n                    arguments "-DANDROID_PAGE_SIZE=16384"\n                }\n            }' $BUILD_GRADLE_PATH
-          echo "16K page support configuration added to $BUILD_GRADLE_PATH"
-          # 可选：打印修改后的文件，用于调试
-          # cat $BUILD_GRADLE_PATH
-
       - name: Build with Gradle
         run: ./gradlew :breakpad-android:assembleRelease
 
